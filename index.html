@@ -1,77 +1,136 @@
 <!DOCTYPE html>
-<html>
+<html lang="sv">
 <head>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.2.4/fabric.min.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    #canvas { border: 1px solid #ccc; }
-    label, select, button { margin: 5px; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Designa din dekal</title>
+<style>
+  /* Reset och grund */
+  body, html {
+    margin: 0; padding: 0; height: 100%;
+    font-family: Arial, sans-serif;
+    background: #f9f9f9;
+    display: flex; flex-direction: column;
+  }
+  header {
+    background: #222;
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  header img {
+    height: 40px;
+  }
+  header h1 {
+    margin: 0;
+    font-weight: normal;
+  }
+  main {
+    flex-grow: 1;
+    display: flex;
+    padding: 20px;
+    gap: 20px;
+    box-sizing: border-box;
+    background: white;
+  }
+  #controls {
+    width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  label {
+    font-weight: bold;
+  }
+  select, input[type="text"], input[type="color"], button {
+    width: 100%;
+    padding: 8px;
+    font-size: 16px;
+  }
+  #canvas-container {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  canvas {
+    border: 1px solid #ccc;
+    max-width: 100%;
+    height: auto;
+  }
+</style>
 </head>
 <body>
+<header>
+  <img src="https://i.imgur.com/rMls5w2.png" alt="Din Logga" />
+  <h1>Designa din dekal</h1>
+</header>
+<main>
+  <div id="controls">
+    <label for="text-input">Text:</label>
+    <input type="text" id="text-input" value="Din text här" />
 
-  <label for="fontSelect">Välj font:</label>
-  <select id="fontSelect">
-    <option value="Arial">Arial</option>
-    <option value="Comic Sans MS">Comic Sans MS</option>
-    <option value="Courier New">Courier New</option>
-    <option value="Georgia">Georgia</option>
-    <option value="Impact">Impact</option>
-    <option value="Tahoma">Tahoma</option>
-    <option value="Times New Roman">Times New Roman</option>
-    <option value="Verdana">Verdana</option>
-  </select>
+    <label for="font-select">Font:</label>
+    <select id="font-select">
+      <option value="Arial">Arial</option>
+      <option value="'Comic Sans MS', cursive, sans-serif">Comic Sans</option>
+      <option value="'Courier New', Courier, monospace">Courier New</option>
+      <option value="'Georgia', serif">Georgia</option>
+      <option value="'Impact', Charcoal, sans-serif">Impact</option>
+      <option value="'Times New Roman', Times, serif">Times New Roman</option>
+      <option value="'Verdana', Geneva, sans-serif">Verdana</option>
+    </select>
 
-  <button onclick="addText()">Lägg till text</button>
-  <button onclick="saveImage()">Spara design</button>
-  <input type="file" id="imgLoader" />
+    <label for="color-picker">Färg:</label>
+    <input type="color" id="color-picker" value="#000000" />
 
-  <br><br>
-  <canvas id="canvas" width="600" height="400"></canvas>
+    <button id="download-btn">Ladda ner som PNG</button>
+  </div>
 
-  <script>
-    const canvas = new fabric.Canvas('canvas');
+  <div id="canvas-container">
+    <canvas id="decal-canvas" width="600" height="400"></canvas>
+  </div>
+</main>
 
-    function addText() {
-      const font = document.getElementById('fontSelect').value;
-      const text = new fabric.Textbox('Skriv här', {
-        left: 50,
-        top: 50,
-        fill: '#000',
-        fontSize: 24,
-        fontFamily: font,
-        editable: true
-      });
-      canvas.add(text);
-      canvas.setActiveObject(text);
-    }
+<script>
+  const canvas = document.getElementById('decal-canvas');
+  const ctx = canvas.getContext('2d');
 
-    document.getElementById('imgLoader').onchange = function handleImage(e) {
-      const reader = new FileReader();
-      reader.onload = function (event) {
-        fabric.Image.fromURL(event.target.result, function(img) {
-          img.set({ left: 100, top: 100, scaleX: 0.5, scaleY: 0.5 });
-          canvas.add(img);
-        });
-      };
-      reader.readAsDataURL(e.target.files[0]);
-    };
+  const textInput = document.getElementById('text-input');
+  const fontSelect = document.getElementById('font-select');
+  const colorPicker = document.getElementById('color-picker');
+  const downloadBtn = document.getElementById('download-btn');
 
-    function saveImage() {
-      // Ta bort markering innan sparande för snygg bild
-      canvas.discardActiveObject();
-      canvas.renderAll();
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      const dataURL = canvas.toDataURL({
-        format: 'png',
-        quality: 1
-      });
-      const link = document.createElement('a');
-      link.href = dataURL;
-      link.download = 'dekal-design.png';
-      link.click();
-    }
-  </script>
+    // Bakgrund (valfritt)
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // Text
+    ctx.fillStyle = colorPicker.value;
+    ctx.font = `48px ${fontSelect.value}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(textInput.value, canvas.width / 2, canvas.height / 2);
+  }
+
+  textInput.addEventListener('input', draw);
+  fontSelect.addEventListener('change', draw);
+  colorPicker.addEventListener('input', draw);
+
+  downloadBtn.addEventListener('click', () => {
+    const link = document.createElement('a');
+    link.download = 'dekal.png';
+    link.href = canvas.toDataURL();
+    link.click();
+  });
+
+  // Rita initialt
+  draw();
+</script>
 </body>
 </html>
